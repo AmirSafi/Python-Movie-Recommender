@@ -8,3 +8,6 @@ Day1:
 -implement most popular movie recommender 
 
 
+Day 2: 
+-Implement pearson correlation measure method 
+-Implement collabrotive filtering both user and item based 
