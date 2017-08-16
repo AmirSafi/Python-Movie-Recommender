@@ -72,14 +72,14 @@ def importMovieData():
         movieTitleMap[movieID] = movieTitle
     return df
 
-
-
 # Create user-item matrix ratings matrix  
 # Note: This matrix is quite sparse. We have just 100,000 ratings. 
 # Only 6% (100,000/ 943*1682) of the matrix is filled   
 # Parameter data : Pandas dataframe containing ratings 
-def userItemMatrix(data):
-    matrix = np.zeros((numUsers+1 , numItems+1))
+# Parameter nUsers: number of users 
+# parameter nItems: number of Items 
+def userItemMatrix(data , nUsers , nItems):
+    matrix = np.zeros((nUsers + 1 , nItems + 1))
     for x in data.values:
         user = x[0]
         item = x[1]
@@ -87,6 +87,7 @@ def userItemMatrix(data):
         matrix[user][item] = rating    
     return matrix
 
+#Simple Popularity Model 
 #Returns most popular movies based on average ratings 
 #parameter matrix: User-Item matrix
 #parameter n: size of the recommendation list     
@@ -184,16 +185,53 @@ def userCFrecommender(matrix, userID ,k = 10):
     orderedList = list(reversed(topList)) 
     return orderedList
 
- 
 #Nearest-neighbor item-item Collaborative filter 
 #parameter matrix: User-Item matrix
 #parameter k: Number of nearest neighbors   
-def itemCF(matrix, k = 10):
+def itemCF(matrix, itemID, k = 5):
     #Precondtion Check 
     if k > numItems:
         return None 
+    #transpose the matrix 
+    matrix = matrix.T
+    #itemCorrVector = np.zeros((1 ,numItems + 1))
+    neighbors = []
+    #find the k nearses neighbors to the user
+    for item2 in range(1 , numItems + 1):
+        correlation = np.corrcoef(matrix[itemID], matrix[item2])[0][1]
+        #if item2 != itemID:
+        neighbors.append(tuple((correlation, item2)))
+    neighbors.sort()
+    kNearest = neighbors[-k:]
+    topList = []
+    for x in kNearest:
+        topList.append(tuple((x[0],movieTitleMap[x[1]])))
+    orderedList = list(reversed(topList)) 
+    return orderedList
+
+#Matrix Factorization , Singular Value Decomposition
+def svd(matrix):
+    #normalize the matrix by subtracting the mean off 
+    norm = matrix - np.asarray([(np.mean(matrix, 1))]).T
+    #print norm[7][479]
+    #print matrix[7][479]
+    U, s , V = np.linalg.svd(norm)
     return None
 
+#Estimate the baseline rating of an item the user hasn't seen 
+#as their average rating of all the movies they have rated.
+def baseline(matrix, userID):
+    #precondition check
+    if userID > numUsers or userID < 0:
+        return None
+    total = 0
+    numRating = 0
+    for x in matrix[userID]:
+        if x > 0:
+            total += x
+            numRating += 1
+    avgRating = total/numRating   
+    return avgRating
 
 #Similarity function
 #Returns similarity measure of two objects (user or items)
@@ -274,24 +312,25 @@ def expDataAnalysis(rating , movies):
     #print rating.iloc[0:5, 2]
     #print rating["rating"]
     #plt.show()
+    #print rating['rating'].unique()
+    #print movies['movie title'].unique()[1:5]
     #print 'eda'
     return None    
 
 if __name__ == '__main__':
     ratingData = importAllRatingData()
     movieData = importMovieData()
-    #expDataAnalysis(ratingData, movieData)
+    expDataAnalysis(ratingData, movieData)
     importTestData('ua.base')
     importGenre()
-    matrix = userItemMatrix(ratingData)
+    matrix = userItemMatrix(ratingData , numUsers, numItems)
     topList = mostPopularMovie(matrix)
     #print topList
     userCFrecommender(matrix , 66)
-    #pearsonCorrUsers(matrix, 60,30)
-    
-    #importMovieData()
-    #importGenre()
-    #userItemMatrix(data)
-    #mostPopularMovie(matrix)
-    #userCF()
-    #itemCF(matrix)
+    itemCF(matrix, 538)
+    baseline(matrix, 8)
+    pearsonCorrUsers(matrix, 60,30)
+    svd(matrix)
+
+
+
