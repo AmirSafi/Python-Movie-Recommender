@@ -1,0 +1,39 @@
+sqlite3 MovieLens100k.db
+
+CREATE TABLE rating (
+  'user id' INTEGER,
+  'movie id' INTEGER,
+  'rating' INTEGER,
+  'timestamp' INTEGER
+);
+
+.schema
+
+.separator ","
+.import '../../../datasets/100k/ml-100k/ml-100k/u.data' rating
+
+SELECT count(*) FROM rating;
+SELECT * FROM rating LIMIT 10;
+SELECT "user id" FROM rating LIMIT 10;
+
+/* Review practice SQL */
+
+SELECT DISTINCT rating
+FROM rating;
+
+SELECT rating ,SUM(rating) AS Sum
+FROM rating
+GROUP BY rating;
+
+SELECT CAST(SUM(rating) AS float) / CAST(COUNT(rating) AS float)
+FROM rating 
+GROUP BY "user id";
+
+
+SELECT "movie id" , COUNT(rating) AS Count
+FROM rating
+WHERE rating > 4
+GROUP BY "movie id"
+ORDER BY COUNT(rating) DESC
+LIMIT 10;
+

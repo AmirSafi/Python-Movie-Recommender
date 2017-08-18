@@ -4,20 +4,23 @@
 Python Movie Recommender 
 Collaborative Filtering 
 
-using MovieLens data set 
+using MovieLens 100k data set 
 
 Created on Wed Aug  9 21:31:35 2017
 
 @author: Amir
 """
+import sqlite3
 import pandas as pd
 import numpy as np
+from datetime import datetime
+#These libraries are used in the 
+#exploratory data analysis method
 from math import sqrt, pi 
 import matplotlib.pyplot as plt
-#import scipy.stats
+import scipy.stats
 
-#scipy.stats.pearsonr([1], [1])
-
+#Based on 100K data set
 numUsers = 943
 numItems = 1682
 numRatings = 100000
@@ -30,6 +33,14 @@ movieTitleMap= {}
 itemCorrMatrix = np.zeros((numItems+1 , numItems+1))
 #genre name and ID
 genre_dict = {}
+
+#Import data from sqlite3 database 
+def importSQLdatabase():
+    connection = sqlite3.connect('../database/100k/sqlite/MovieLens100k.db')
+    sqlDB = connection.execute('SELECT * FROM rating')
+    data = [row for row in sqlDB]
+    df = pd.DataFrame(data , columns = ratingColumns)
+    return df
 
 # import data into pandas dataframe 
 # for now I'm ignoring the timestamp data. 
@@ -71,6 +82,17 @@ def importMovieData():
         movieTitle = movie[1]
         movieTitleMap[movieID] = movieTitle
     return df
+
+
+#Returns the time span of the rating data as a string 
+#Parameter data: Pandas Dataframe 
+def timeSpan(data):
+    max = data.apply(np.max)['timestamp']
+    min = data.apply(np.min)['timestamp']
+    maxStr = datetime.fromtimestamp(max).strftime('%m/%d/%Y')
+    minStr = datetime.fromtimestamp(min).strftime('%m/%d/%Y')
+    span = 'From : ' + minStr + ' To: ' + maxStr
+    return span
 
 # Create user-item matrix ratings matrix  
 # Note: This matrix is quite sparse. We have just 100,000 ratings. 
@@ -130,7 +152,9 @@ def mostPopularMovie(matrix, n=5):
 #parameter matrix: User-Item matrix
 #parameter k: Number of nearest neighbors   
 #return list: a list of top k items for userID using collabrotive filtering     
-def userCFrecommender(matrix, userID ,k = 10):
+def userCFrecommender(matrix, userID ,k = 10 , n = 5):
+    numUsers = matrix.shape[0] - 1
+    numItems = matrix.shape[1] - 1
     #Precondtion Check 
     if k > numUsers or userID > numUsers:
         return None
@@ -139,7 +163,7 @@ def userCFrecommender(matrix, userID ,k = 10):
     neighbors = []
     #find the k nearses neighbors to the user
     for user2 in range(1 , numUsers + 1):
-        #The person correlation method I implemented was very unefficient 
+        #The pearson correlation method I implemented was very unefficient 
         #I read SciPy documentaion and found a function called scipy.stats.personr
         #Numpy also has a simillar method called numpy.corrcoef
         #the numpy and my pearson correlation methods give slightly different correlation 
@@ -177,8 +201,8 @@ def userCFrecommender(matrix, userID ,k = 10):
     #print items
     items.sort(key = lambda item: (item[1], item[0]))
     #List comprehension to get tuples of movie ID and average rating
-    sortedRatings = [(item[1]['rating'], item[0]) for item in items]
-    topN = sortedRatings[-k:]
+    sortedRatings = [(item[1]['rating'], item[0]) for item in items if matrix[userID][item[0]] ==  0]
+    topN = sortedRatings[-n:]
     topList = []
     for x in topN:
         topList.append(tuple((x[0],movieTitleMap[x[1]])))
@@ -189,6 +213,7 @@ def userCFrecommender(matrix, userID ,k = 10):
 #parameter matrix: User-Item matrix
 #parameter k: Number of nearest neighbors   
 def itemCF(matrix, itemID, k = 5):
+    numItems = matrix.shape[1] - 1
     #Precondtion Check 
     if k > numItems:
         return None 
@@ -197,7 +222,7 @@ def itemCF(matrix, itemID, k = 5):
     #itemCorrVector = np.zeros((1 ,numItems + 1))
     neighbors = []
     #find the k nearses neighbors to the user
-    for item2 in range(1 , numItems + 1):
+    for item2 in range(1 , numItems):
         correlation = np.corrcoef(matrix[itemID], matrix[item2])[0][1]
         #if item2 != itemID:
         neighbors.append(tuple((correlation, item2)))
@@ -230,12 +255,13 @@ def baseline(matrix, userID):
         if x > 0:
             total += x
             numRating += 1
+    if numRating == 0:
+        return None        
     avgRating = total/numRating   
     return avgRating
 
-#Similarity function
-#Returns similarity measure of two objects (user or items)
-#Caclualted by the person correlation coefficient    
+#Similarity function: Returns similarity measure of two objects (user or items)
+#Caclualted by the pearson correlation coefficient    
 #Time complexity of this algorithim is O(n^2) where n is the number of users 
 #This is computationaly expensive and should be run only when necessary 
 #Parameter user1 , user2      
@@ -318,11 +344,13 @@ def expDataAnalysis(rating , movies):
     return None    
 
 if __name__ == '__main__':
-    ratingData = importAllRatingData()
+    importSQLdatabase()
+    importAllRatingData()
     movieData = importMovieData()
     expDataAnalysis(ratingData, movieData)
     importTestData('ua.base')
     importGenre()
+    timeSpan(ratingData)
     matrix = userItemMatrix(ratingData , numUsers, numItems)
     topList = mostPopularMovie(matrix)
     #print topList
