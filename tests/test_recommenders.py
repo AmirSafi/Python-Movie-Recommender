@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Aug 15 16:23:43 2017
-
 @author: Amir
 """
 import unittest 
@@ -83,8 +82,9 @@ class Recommender1Test(unittest.TestCase):
         #A collabrative filter with k = 1 should recommend this movie 
         self.assertEqual(userCFrecommender(smallMatrix, 3 ,k = 1 , n = 1), \
                          [(4.0, 'Shanghai Triad (Yao a yao yao dao waipo qiao) (1995)')])
+        
     def testItemCFRecommender(self):
         self.assertEqual(1,1)
         
 if __name__ == '__main__':
-    unittest.main()        
+    unittest.main()       
