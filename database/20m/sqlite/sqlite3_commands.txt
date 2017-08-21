@@ -1,0 +1,10 @@
+sqlite3 MovieLens20m.db
+
+CREATE TABLE rating (
+  'userID' INTEGER,
+  'movieID' INTEGER,
+  'rating' REAL,
+  'timestamp' INTEGER
+);
+
+.import '../../../datasets/20m/ml-20m/ml-20m/ratings.csv' rating
