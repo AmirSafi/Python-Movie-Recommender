@@ -11,9 +11,7 @@ import sqlite3
 import pandas as pd
 import numpy as np
 from datetime import datetime
-#These libraries are used in the 
-#exploratory data analysis method
-from math import sqrt, pi 
+from math import sqrt, pi , pow
 import matplotlib.pyplot as plt
 import scipy.stats
 
@@ -103,9 +101,7 @@ def timeSpan(data):
 
 
 def userItemMatrix(data , nUsers , nItems):
-    """Create user-item matrix ratings matrix  
-    Note: This matrix is quite sparse. We have just 100,000 ratings. 
-    Only 6% (100,000/ 943*1682) of the matrix is filled   
+    """Create user-item matrix ratings matrix   
     @Param: data Pandas dataframe containing ratings 
     @Param: nUsers Number of users 
     @Param: nItems Number of Items
@@ -247,41 +243,48 @@ def itemCF(matrix, itemID, k = 5):
     orderedList = list(reversed(topList)) 
     return orderedList
 
-def svd(matrix):
+def svd(matrix , test, k):
     """Matrix Factorization , Singular Value Decomposition
     R = P*s*Qt
     P = m x n ratings matrix 
     s = k x k diagonal feature weight matrix (singular values)
     Q = n x k item-feature relevance matrix , Qt = Q transpose
-    Prediction Rule r-ui 
-    
-    
+    Prediction Rule r-ui = users u's rating for item i. 
+    r-ui = sum over f features of puf*sigmaf*qif
     @Param: matrix A User-Item matrix 
-    @Return:   """
-    #normalize the matrix by subtracting the mean off 
-    #mean rating for each user
+    @Param: test A test set 
+    @Param: k The number of features to use
+    @Return: rmse Root Mean Squared Error  """
+    #normalize the matrix by subtracting the mean off mean rating for each user
     mean = np.mean(matrix,1)
     #Transpose the row vector
     meanT = np.asarray([(mean)]).T
     normR = matrix - meanT
-    #print norm[7][479]
-    #print matrix[7][479]
     P, s , Qt = np.linalg.svd(normR , full_matrices = False)
     S = np.diag(s)
-    
-    print P[1].shape
-    print S[1].shape
-    print Qt[1].shape
-    #v = np.dot(P[1], np.dot(S[1],Qt[1].T))
-    #print np.dot(P, np.dot(S,Qt))
-    #print np.dot(s , np.identity(s.size))
-    #zz = np.dot(s , np.identity(s.size))
-    #print P.shape
-    #print s.shape
-    #print Qt.shape   
-    #print np.dot(np.dot(P,s),Qt)
-    #print P
-    return None
+    n = test.size 
+    sumError = 0 
+    for x in test.values:
+        user = x[0]
+        item = x[1]
+        rating = x[2]
+        rui = 0
+        bui = baseline(matrix, user)
+        #Estimate based on k latent features 
+        for f in range(0, k):
+            rui += P[user][f]*S[f][f]*Qt[f][item]
+        #Add back the baseline predictor
+        rui += bui
+        if rui > 5:
+            rui = 5
+        if rui < 1:
+            rui = 1
+        deltaSQ = pow(rating - rui , 2) 
+        sumError += deltaSQ
+        #print 'predicted rating ' , rui , 'actual rating ', str(rating)
+    rmse =  sqrt(sumError/n)   
+    print 'RMSE:' , rmse
+    return rmse
 
 
 def baseline(matrix, userID):
@@ -377,5 +380,7 @@ if __name__ == '__main__':
     baseline(matrix, 8)
     pearsonCorrUsers(matrix, 60,30)
     testMovieObject(movieData)
-    svd(matrix)
+    trainMatrix = userItemMatrix(importTestData('ua.base') , numUsers, numItems)
+    test = importTestData('ua.test') 
+    svd(trainMatrix , test, 20)
 

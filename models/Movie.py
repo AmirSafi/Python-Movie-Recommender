@@ -5,7 +5,6 @@ A movie class to represent a movie and its information.
 
 @author: Amir
 """
-
 class Movie:
     def __init__(self , movieID , movieTitle, releaseDate , IMDbURL):
         self.movieID = movieID
