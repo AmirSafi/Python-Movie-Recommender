@@ -77,14 +77,22 @@ class Recommender1Test(unittest.TestCase):
         self.assertEqual(baseline(smallMatrix, 1) , 3.6)
         self.assertEqual(baseline(smallMatrix, 7) , 3.0)
         
+    def testPearsonCorrUsers(self):
+        self.assertEquals(1,1)
+        
+
     def testUserCFRecommender(self):
         #user 1 is very simillar to user 3 and had rated 'Shanghai Triad' with 4 stars
         #A collabrative filter with k = 1 should recommend this movie 
         self.assertEqual(userCFrecommender(smallMatrix, 3 ,k = 1 , n = 1), \
                          [(4.0, 'Shanghai Triad (Yao a yao yao dao waipo qiao) (1995)')])
-        
+    
     def testItemCFRecommender(self):
         self.assertEqual(1,1)
+        
+    def testSVD(self):
+        self.assertEquals(1,1)
+        
         
 if __name__ == '__main__':
     unittest.main()       

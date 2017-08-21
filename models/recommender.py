@@ -249,14 +249,38 @@ def itemCF(matrix, itemID, k = 5):
 
 def svd(matrix):
     """Matrix Factorization , Singular Value Decomposition
+    R = P*s*Qt
+    P = m x n ratings matrix 
+    s = k x k diagonal feature weight matrix (singular values)
+    Q = n x k item-feature relevance matrix , Qt = Q transpose
+    Prediction Rule r-ui 
+    
+    
     @Param: matrix A User-Item matrix 
     @Return:   """
     #normalize the matrix by subtracting the mean off 
-    norm = matrix - np.asarray([(np.mean(matrix, 1))]).T
+    #mean rating for each user
+    mean = np.mean(matrix,1)
+    #Transpose the row vector
+    meanT = np.asarray([(mean)]).T
+    normR = matrix - meanT
     #print norm[7][479]
     #print matrix[7][479]
-    U, s , V = np.linalg.svd(norm)
-    print U, s, V
+    P, s , Qt = np.linalg.svd(normR , full_matrices = False)
+    S = np.diag(s)
+    
+    print P[1].shape
+    print S[1].shape
+    print Qt[1].shape
+    #v = np.dot(P[1], np.dot(S[1],Qt[1].T))
+    #print np.dot(P, np.dot(S,Qt))
+    #print np.dot(s , np.identity(s.size))
+    #zz = np.dot(s , np.identity(s.size))
+    #print P.shape
+    #print s.shape
+    #print Qt.shape   
+    #print np.dot(np.dot(P,s),Qt)
+    #print P
     return None
 
 
@@ -336,60 +360,12 @@ def testMovieObject(movieData):
         
     #print movie_Dict.get('movie1').toString()
     return None 
- 
-def expDataAnalysis(rating , movies):
-    """Exploratory data analyis and pratice using pandas majority of the 
-    indexing ,functions and visualization is quite simillar to Matlab!
-    @Param rating A Pandas Dataframe with rating data and labeled columns
-    @Param movies A Pandas Dataframe with movie data and labeled columns""" 
-    #print rating.head()
-    #print rating.shape
-    #print movies.head()
-    #print movies.shape
-    #print rating.describe()
-    #print movies.describe()
-    #print rating.iloc[0:5,:]
-    #print movies.iloc[0:1,0:9]
-    #print movies.index
-    #print movies.loc[8,["movie title" , "IMDb URL"]]
-    #print movies.loc[8,"Action"]
-    #print movies.iloc[:,1]
-    #print type(movies["movie id"])
-    #s1 = pd.Series([1,2])
-    #print s1
-    #s2 = pd.Series(["Rumble in the Bronx" , "Batman Forever"])
-    #print s2
-    #d1 = pd.DataFrame([s1, s2])
-    #print d1
-    #frame = pd.DataFrame([["GoldenEye", "Toy Story"],["Little City", "Muppet Treasure Island"]], 
-    #                     index = ["row1", "row2"], columns = ["movie id", "movie title"])
-    #print frame
-    #print movies.mean(axis = 0)
-    #print movies.corr()
-    #print movies["Action"] == 1
-    #print rating["rating"] > 3
-    #plt.plot(np.arange(0.0, 5.0, 0.1) , np.cos(2*pi*np.arange(0.0, 5.0, 0.1)) , 'ro')
-    #plt.axis([0, pi, -pi, pi])
-    #plt.ylabel('y')
-    #plt.xlabel('time')
-    #plt.show()
-    #plt.plot(pd.DataFrame.hist(rating["rating"]))
-    #Need to work on pandas bar plots ...
-    #pd.DataFrame.transpose(rating).iloc[2, 0:5].plot(kind = 'bar')
-    #print pd.DataFrame.transpose(rating).iloc[2, 2]
-    #print rating.iloc[0:5, 2]
-    #print rating["rating"]
-    #plt.show()
-    #print rating['rating'].unique()
-    #print movies['movie title'].unique()[1:5]
-    #print 'eda'
-    return None    
+   
 
 if __name__ == '__main__':
     importSQLdatabase()
-    importAllRatingData()
+    ratingData = importAllRatingData()
     movieData = importMovieData()
-    expDataAnalysis(ratingData, movieData)
     importTestData('ua.base')
     importGenre()
     timeSpan(ratingData)

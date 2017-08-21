@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Aug 18 16:36:53 2017
+A movie class to represent a movie and its information.
 
 @author: Amir
 """
